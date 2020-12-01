@@ -1,5 +1,5 @@
-var CACHE_NAME = 'my-site-cache-v1';
-var urlsToCache = [
+var CACHE_NAME = 'offline-cche';
+var files = [
     '/',
     '/style.css',
     '/helpers.js',
@@ -10,27 +10,35 @@ var urlsToCache = [
     '/app.js'
 ];
 
-self.addEventListener('install', function (event) {
+self.addEventListener('install', (event) => {
     // Perform install steps
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(function (cache) {
-                console.log('Opened cache');
-                return cache.addAll(urlsToCache);
-            })
-    );
+    event.waitUntil((async () => {
+        self.skipWaiting();
+        const cache = await caches.open(CACHE_NAME);
+        await cache.addAll(files);
+    })());
 });
 
-self.addEventListener('fetch', function (event) {
-    event.respondWith(
-        caches.match(event.request)
-            .then(function (response) {
-                // Cache hit - return response
-                if (response) {
-                    return response;
-                }
-                return fetch(event.request);
+self.addEventListener('activate', (event) => {
+    event.waitUntil((async () => {
+        self.clients.claim();
+    })());
+});
+
+self.addEventListener('fetch', (event) => {
+    event.respondWith((async () => {
+        const url = event.request.url;
+        const cache = await caches.open(CACHE_NAME);
+        try {
+            const networkResponse = await fetch(url);
+            if (networkResponse.ok) {
+                console.log('From network: ${url}');
+                return networkResponse;
             }
-            )
-    );
+            throw Error("Fetch Failing with status ${networkResponse.status}");
+        } catch (err) {
+            console.log('From cache: ${url}');
+            return cache.match(url);
+        }
+    })());
 });
