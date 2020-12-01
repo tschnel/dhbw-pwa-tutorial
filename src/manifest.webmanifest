@@ -11,15 +11,22 @@
     ],
     "start_url": ".",
     "background_color": "#3367D6",
-    "display": "minimal-ui",
+    "display": "standalone",
     "scope": ".",
     "theme_color": "#3367D6",
     "shortcuts": [
         {
             "name": "What's About",
             "short_name": "About",
-            "description": "View weather information for today",
-            "url": "./about.html"
+            "description": "See who made this",
+            "url": "./about.html?utn_source=homescreen",
+            "icons": [
+                {
+                    "src": "/icon.png",
+                    "type": "image/png",
+                    "sizes": "512x512"
+                }
+            ]
         }
     ]
 }
