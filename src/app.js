@@ -5,9 +5,70 @@ const ctx = canvas.getContext('2d', {
   desynchronized: true,
 });
 
-ctx.fillStyle = 'white';
-ctx.fillRect(0, 0, canvas.width, canvas.height);
-ctx.fillStyle = 'black';
+const clear = () => {
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'black';
+};
+clear();
+
+const btnClear = document.querySelector('#clear');
+btnClear.addEventListener('click', clear);
+
+const fileOptions = {
+  types: [
+    {
+      description: 'PNG files',
+      accept: { 'image/png': ['.png'] },
+    },
+    {
+      description: 'JPG files',
+      accept: { 'image/jpeg': ['.jpg', '.jpeg'] },
+    },
+  ],
+};
+
+const btnSave = document.querySelector('#save');
+btnSave.addEventListener('click', async () => {
+  const blob = await toBlob(canvas);
+  if ('showSaveFilePicker' in window) {
+    const handle = await window.showSaveFilePicker(fileOptions);
+    const writable = await handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+  } else {
+    const anchor = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    anchor.href = url;
+    anchor.download = '';
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+});
+
+const btnOpen = document.querySelector('#open');
+btnOpen.addEventListener('click', async () => {
+  if ('showOpenFilePicker' in window) {
+    const [handle] = await window.showOpenFilePicker(fileOptions);
+    const file = await handle.getFile();
+    const image = await getImage(file);
+    ctx.drawImage(image, 0, 0);
+  } else {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/png,image/jpeg,.png,.jpg,.jpeg,.webp,.gif';
+    input.addEventListener('change', async () => {
+      try {
+        const blob = input.files[0];
+        const image = await getImage(blob);
+        ctx.drawImage(image, 0, 0);
+      } catch (e) {
+        console.error(e.message, e.name);
+      }
+    });
+    input.click();
+  }
+});
 
 let previousPoint = null;
 canvas.addEventListener('pointerdown', (event) => {
@@ -36,11 +97,32 @@ txtColor.addEventListener('change', () => {
   ctx.fillStyle = txtColor.value;
 });
 
-document.querySelectorAll('button').forEach((button) =>
-  button.addEventListener('click', (e) => {
-    alert(`Implement the "${e.target.textContent}" feature!`);
-  })
+const btnCopy = document.querySelector('#copy');
+btnCopy.disabled = !(
+  'clipboard' in navigator && 'write' in navigator.clipboard
 );
+btnCopy.addEventListener('click', async () => {
+  const blob = await toBlob(canvas);
+  await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+});
+
+const btnPaste = document.querySelector('#paste');
+btnPaste.disabled = !(
+  'clipboard' in navigator && 'read' in navigator.clipboard
+);
+
+btnPaste.addEventListener('click', async () => {
+  const clipboardItems = await navigator.clipboard.read();
+  for (const clipboardItem of clipboardItems) {
+    for (const type of clipboardItem.types) {
+      if (type === 'image/png') {
+        const blob = await clipboardItem.getType(type);
+        const image = await getImage(blob);
+        ctx.drawImage(image, 0, 0);
+      }
+    }
+  }
+});
 
 //window.addEventListener('load', async () => {
 if ('serviceWorker' in navigator) {
