@@ -1,0 +1,17 @@
+{
+    "short_name": "Canvas",
+    "name": "Canvas - Draw your life",
+    "description": "Draw your ideas on a canvas, save it or resume your work",
+    "icons": [
+        {
+            "src": "/icon.png",
+            "type": "image/png",
+            "sizes": "512x512"
+        }
+    ],
+    "start_url": ".",
+    "background_color": "#3367D6",
+    "display": "minimal-ui",
+    "scope": ".",
+    "theme_color": "#3367D6"
+}
